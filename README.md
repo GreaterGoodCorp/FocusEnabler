@@ -78,6 +78,7 @@ $ focus remove youtube.com facebook.com
 ```
 
 The output should look like this:
+
 ```
 - Checking operating system → MacOS
 - Checking if a config file is already exists → Found at /Users/m1k3/.focusenabler
@@ -88,16 +89,17 @@ The output should look like this:
 ```
 
 > Notes:
-> * The domain will be ignored if it is not blacklisted already.
 > 
-> * 
+> * The domain will be ignored if it is not blacklisted already.
 
 ## Contributing
+
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-Please make sure to update tests as appropriate.
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+
+This program is licensed under the
+[MIT License](https://github.com/GreaterGoodCorp/FocusEnabler/blob/main/LICENSE).
 
 [GitHub]: https://github.com/GreaterGoodCorp/FocusEnabler
