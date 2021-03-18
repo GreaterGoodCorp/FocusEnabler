@@ -1,0 +1,3 @@
+# Focus Enabler
+
+A program to enable focus by blocking websites and more...
