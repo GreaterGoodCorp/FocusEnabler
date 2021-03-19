@@ -51,19 +51,19 @@ def initialise_config_dict():
     write_config_to_file()
 
 
-def print_message(title, content, title_colour="bright_white", content_colour="bright_green", fp=sys.stdout):
+def print_message(title, content, title_colour="white", content_colour="green", fp=sys.stdout):
     """Print a formatted message."""
     click.echo(get_input_prompt(title, title_colour) + click.style(content, content_colour), file=fp)
 
 
-def get_input_prompt(title, colour="bright_white"):
+def get_input_prompt(title, colour="white"):
     """Get prompt for input() function"""
     return click.style(f"- {title} \u2192 ", colour)
 
 
 def decorate_domain_name(dm):
     """Decorate the domain name to stand out."""
-    return f"{click.style(dm, 'bright_yellow', underline=True)}"
+    return f"{click.style(dm, 'yellow', underline=True)}"
 
 
 def initialise_win32():
@@ -127,14 +127,14 @@ def check_host_accessibility():
         print_message("Checking if host file is accessible", "Yes")
         is_host_accessible = True
     else:
-        print_message("Checking if host file is accessible", "No", content_colour="bright_red")
+        print_message("Checking if host file is accessible", "No", content_colour="red")
         is_host_accessible = False
 
 
 def enforce_accessible_host():
     """Make sure the host file is accessible."""
     if not is_host_accessible:
-        click.echo(click.style("Host file is inaccessible", "bright_red"))
+        click.echo(click.style("Host file is inaccessible", "red"))
         exit(1)
 
 
@@ -149,11 +149,11 @@ def enforce_privileged_access():
     """Make sure the app is run with privileged access."""
     try:
         if os.getuid() != 0:
-            click.echo(click.style("WARNING: Please run this command as 'root'", "bright_red"))
+            click.echo(click.style("WARNING: Please run this command as 'root'", "red"))
             exit(1)
     except AttributeError:
         if not ctypes.windll.shell32.IsUserAnAdmin():
-            click.echo(click.style("WARNING: Please run this command as an administrator", "bright_red"))
+            click.echo(click.style("WARNING: Please run this command as an administrator", "red"))
             exit(1)
 
 
@@ -161,11 +161,11 @@ def enforce_non_privileged_access():
     """Make sure the app is not run with privileged access."""
     try:
         if os.getuid() == 0:
-            click.echo(click.style("WARNING: Please do not run this command as 'root'", "bright_red"))
+            click.echo(click.style("WARNING: Please do not run this command as 'root'", "red"))
             exit(1)
     except AttributeError:
         if ctypes.windll.shell32.IsUserAnAdmin():
-            click.echo(click.style("WARNING: Please do not run this command as an administrator", "bright_red"))
+            click.echo(click.style("WARNING: Please do not run this command as an administrator", "red"))
             exit(1)
 
 
@@ -204,7 +204,7 @@ def write_config_to_file():
             json.dump(config_dict, fp)
         print_message("Writing to config file", "OK")
     except OSError:
-        print_message("Writing to config file", "Failed", content_colour="bright_red")
+        print_message("Writing to config file", "Failed", content_colour="red")
         exit(1)
 
 
@@ -219,7 +219,7 @@ def add_domain_internal(domains):
             else:
                 print_message(f"Blacklisting {decorate_domain_name(dm)}", "Already blacklisted")
         else:
-            print_message(f"Blacklisting {decorate_domain_name(dm)}", "Invalid", content_colour="bright_red")
+            print_message(f"Blacklisting {decorate_domain_name(dm)}", "Invalid", content_colour="red")
     return c
 
 
@@ -227,7 +227,7 @@ def remove_domain_internal(confirm, domains, fp):
     """(Internal) Remove domain from config."""
     if domains == (".",):
         if len(config_dict["blacklisted_domains"]) == 0:
-            click.echo(click.style("No blacklisted domains found", "bright_red"))
+            click.echo(click.style("No blacklisted domains found", "red"))
             exit(0)
         domains = config_dict["blacklisted_domains"]
     for dm in domains:
@@ -241,7 +241,7 @@ def remove_domain_internal(confirm, domains, fp):
             print_message(f"Un-blacklisting {decorate_domain_name(dm)}", "Done", fp=fp)
         else:
             print_message(f"Un-blacklisting {decorate_domain_name(dm)}",
-                          "Not found", content_colour="bright_red", fp=fp)
+                          "Not found", content_colour="red", fp=fp)
 
 
 @click.group("FocusEnabler")
@@ -271,11 +271,11 @@ def list_domain():
     initialise_app()
     enforce_non_privileged_access()
     if len(config_dict["blacklisted_domains"]) == 0:
-        click.echo(click.style("No blacklisted domains found", "bright_red"))
+        click.echo(click.style("No blacklisted domains found", "red"))
         exit(0)
-    click.echo(click.style("All blacklisted domains:", "bright_blue"))
+    click.echo(click.style("All blacklisted domains:", "blue"))
     for domain, count in zip(config_dict["blacklisted_domains"], itertools.count()):
-        click.echo(click.style(f"({count + 1}) {domain}", "bright_cyan"))
+        click.echo(click.style(f"({count + 1}) {domain}", "cyan"))
 
 
 @app_root.command("remove")
@@ -297,7 +297,7 @@ def activate_app():
     enforce_accessible_host()
     with open(path_host) as fp:
         if config_dict["section_start"] in fp.read():
-            click.echo(click.style("FocusEnabler is already activated! Deactivate first.", "bright_red"))
+            click.echo(click.style("FocusEnabler is already activated! Deactivate first.", "red"))
             exit(1)
     entries: typing.List[str] = [config_dict["section_start"]]
     for domain in config_dict["blacklisted_domains"]:
@@ -310,10 +310,10 @@ def activate_app():
             fp.write("\n".join(entries))
         print_message("Writing to host file", "Done")
         flush_dns()
-        click.echo(click.style("FocusEnabler is enabled!", "bright_cyan"))
+        click.echo(click.style("FocusEnabler is enabled!", "cyan"))
         exit(0)
     except OSError:
-        print_message("Writing to host file", "Failed", content_colour="bright_red")
+        print_message("Writing to host file", "Failed", content_colour="red")
         exit(1)
 
 
@@ -331,20 +331,20 @@ def deactivate_app():
         print_message("Reading host file", "Done")
         content = re.sub(rf"{config_dict['section_start']}(.|[\n\r\t])*{config_dict['section_end']}", "", content)
         if len(content) == original_content_len:
-            click.echo(click.style("FocusEnabler is not activated! Activate first", "bright_red"))
+            click.echo(click.style("FocusEnabler is not activated! Activate first", "red"))
             exit(1)
         else:
             print_message("Deactivating FocusEnabler", "Done")
     except OSError:
-        print_message("Reading host file", "Failed", content_colour="bright_red")
+        print_message("Reading host file", "Failed", content_colour="red")
         exit(1)
     try:
         with open(path_host, "w") as fp:
             fp.write(content)
         print_message("Writing to host file", "Done")
-        click.echo(click.style("FocusEnabler is disabled!", "bright_cyan"))
+        click.echo(click.style("FocusEnabler is disabled!", "cyan"))
     except OSError:
-        print_message("Writing to host file", "Failed", content_colour="bright_red")
+        print_message("Writing to host file", "Failed", content_colour="red")
 
 
 def run_core():
