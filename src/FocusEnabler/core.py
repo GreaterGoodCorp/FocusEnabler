@@ -30,13 +30,27 @@ os_name: str
 # Make partial
 style = functools.partial(click.style, bold=True, reset=True)
 
+# base_stdout: Holds a copy of the original stdout
+base_stdout = sys.stdout
+
+# redirect: All output, if not to STDOUT, will go here.
+redirect: io.StringIO = io.StringIO()
+
+
+def disable_stdout():
+    sys.stdout = redirect
+
+
+def enable_stdout():
+    sys.stdout = base_stdout
+
 
 def is_domain_valid(domain):
     """Check if the domain contains valid syntax."""
     return True if re.match(
-            r"^(([a-zA-Z])|([a-zA-Z][a-zA-Z])|([a-zA-Z][0-9])|([0-9][a-zA-Z])"
-            r"|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})$",
-            domain
+        r"^(([a-zA-Z])|([a-zA-Z][a-zA-Z])|([a-zA-Z][0-9])|([0-9][a-zA-Z])"
+        r"|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,3})$",
+        domain
     ) else False
 
 
@@ -51,9 +65,15 @@ def initialise_config_dict():
     write_config_to_file()
 
 
-def print_message(title, content, title_colour="white", content_colour="green", fp=sys.stdout):
+def print_message(title, content, title_colour="white", content_colour="green", fp=None):
     """Print a formatted message."""
+    if not fp:
+        fp = sys.stdout
     click.echo(get_input_prompt(title, title_colour) + click.style(content, content_colour), file=fp)
+
+
+def print_error(error):
+    click.secho(error, sys.stderr, color="red")
 
 
 def get_input_prompt(title, colour="white"):
@@ -96,7 +116,7 @@ def load_config():
     else:
         config_dict = dict()
         config_exist = False
-        print_message("Checking if a config file is already exists", "Not found")
+        print_message("Checking if a config file is already exists", "Not found", content_colour="red")
     initialise_config_non_exist()
 
 
@@ -134,7 +154,7 @@ def check_host_accessibility():
 def enforce_accessible_host():
     """Make sure the host file is accessible."""
     if not is_host_accessible:
-        click.echo(click.style("Host file is inaccessible", "red"))
+        print_error("Host file is inaccessible!")
         exit(1)
 
 
@@ -149,11 +169,11 @@ def enforce_privileged_access():
     """Make sure the app is run with privileged access."""
     try:
         if os.getuid() != 0:
-            click.echo(click.style("WARNING: Please run this command as 'root'", "red"))
+            print_error("WARNING: Please run this command as 'root'")
             exit(1)
     except AttributeError:
         if not ctypes.windll.shell32.IsUserAnAdmin():
-            click.echo(click.style("WARNING: Please run this command as an administrator", "red"))
+            print_error("WARNING: Please run this command as an administrator")
             exit(1)
 
 
@@ -161,11 +181,11 @@ def enforce_non_privileged_access():
     """Make sure the app is not run with privileged access."""
     try:
         if os.getuid() == 0:
-            click.echo(click.style("WARNING: Please do not run this command as 'root'", "red"))
+            print_error("WARNING: Please do not run this command as 'root'")
             exit(1)
     except AttributeError:
         if ctypes.windll.shell32.IsUserAnAdmin():
-            click.echo(click.style("WARNING: Please do not run this command as an administrator", "red"))
+            print_error("WARNING: Please do not run this command as an administrator")
             exit(1)
 
 
@@ -204,7 +224,7 @@ def write_config_to_file():
             json.dump(config_dict, fp)
         print_message("Writing to config file", "OK")
     except OSError:
-        print_message("Writing to config file", "Failed", content_colour="red")
+        print_message("Writing to config file", "Failed", content_colour="red", fp=sys.stderr)
         exit(1)
 
 
@@ -227,15 +247,15 @@ def remove_domain_internal(confirm, domains, fp):
     """(Internal) Remove domain from config."""
     if domains == (".",):
         if len(config_dict["blacklisted_domains"]) == 0:
-            click.echo(click.style("No blacklisted domains found", "red"))
+            click.echo("No blacklisted domains found", color="bright_white")
             exit(0)
         domains = config_dict["blacklisted_domains"]
     for dm in domains:
         if dm in config_dict["blacklisted_domains"]:
-            _opt = None
-            while confirm and _opt not in ("y", "n"):
-                _opt = input(get_input_prompt(f"Un-blacklist '{decorate_domain_name(dm)}'? [Y/N]"))
-            if _opt == "n":
+            option = None
+            while confirm and option not in ("y", "n"):
+                option = input(get_input_prompt(f"Un-blacklist '{decorate_domain_name(dm)}'? [Y/N]"))
+            if option == "n":
                 continue
             config_dict["blacklisted_domains"].remove(dm)
             print_message(f"Un-blacklisting {decorate_domain_name(dm)}", "Done", fp=fp)
@@ -252,37 +272,45 @@ def app_root():
 
 @app_root.command("add")
 @click.option("-c", "--clear", is_flag=True, help="(Optionally) Remove all blacklisted domains (same as 'remove')")
+@click.option("-d", "--disable-verbose", help="Disable echoing messages.", is_flag=True)
 @click.argument("domains", nargs=-1, required=True)
-def add_domain(clear, domains):
+def add_domain(clear, domains, disable_verbose):
     """Add DOMAINS to blacklist."""
+    if disable_verbose:
+        disable_stdout()
     initialise_app()
     enforce_non_privileged_access()
     if clear:
-        with io.StringIO() as sio:
-            remove_domain_internal(False, "*", sio)
+        remove_domain_internal(False, ".", redirect)
     add_domain_internal(domains)
     write_config_to_file()
     exit(0)
 
 
 @app_root.command("list")
-def list_domain():
+@click.option("-d", "--disable-verbose", help="Disable echoing messages.", is_flag=True)
+def list_domain(disable_verbose):
     """List blacklisted domains"""
+    if disable_verbose:
+        disable_stdout()
     initialise_app()
     enforce_non_privileged_access()
     if len(config_dict["blacklisted_domains"]) == 0:
-        click.echo(click.style("No blacklisted domains found", "red"))
+        click.echo("No blacklisted domains found", color="bright_white")
         exit(0)
-    click.echo(click.style("All blacklisted domains:", "blue"))
+    click.echo("All blacklisted domains:", color="blue", file=base_stdout)
     for domain, count in zip(config_dict["blacklisted_domains"], itertools.count()):
-        click.echo(click.style(f"({count + 1}) {domain}", "cyan"))
+        click.echo(f"({count + 1}) {domain}", color="cyan", file=base_stdout)
 
 
 @app_root.command("remove")
 @click.option("-c", "--confirm", is_flag=True, help="Ask before removing each domain")
+@click.option("-d", "--disable-verbose", help="Disable echoing messages.", is_flag=True)
 @click.argument("domains", nargs=-1, required=True)
-def remove_domain(confirm, domains):
+def remove_domain(confirm, domains, disable_verbose):
     """Remove DOMAINS from blacklist"""
+    if disable_verbose:
+        disable_stdout()
     initialise_app()
     enforce_non_privileged_access()
     remove_domain_internal(confirm, domains, sys.stdout)
@@ -290,14 +318,17 @@ def remove_domain(confirm, domains):
 
 
 @app_root.command("activate")
-def activate_app():
+@click.option("-d", "--disable-verbose", help="Disable echoing messages.", is_flag=True)
+def activate_app(disable_verbose):
     """Activate FocusEnabler."""
+    if disable_verbose:
+        disable_stdout()
     initialise_app()
     enforce_privileged_access()
     enforce_accessible_host()
     with open(path_host) as fp:
         if config_dict["section_start"] in fp.read():
-            click.echo(click.style("FocusEnabler is already activated! Deactivate first.", "red"))
+            print_error("FocusEnabler is already activated! Deactivate first.")
             exit(1)
     entries: typing.List[str] = [config_dict["section_start"]]
     for domain in config_dict["blacklisted_domains"]:
@@ -310,16 +341,19 @@ def activate_app():
             fp.write("\n".join(entries))
         print_message("Writing to host file", "Done")
         flush_dns()
-        click.echo(click.style("FocusEnabler is enabled!", "cyan"))
+        click.echo("FocusEnabler is enabled!", color="cyan")
         exit(0)
     except OSError:
-        print_message("Writing to host file", "Failed", content_colour="red")
+        print_message("Writing to host file", "Failed", content_colour="red", fp=sys.stderr)
         exit(1)
 
 
 @app_root.command("deactivate")
-def deactivate_app():
+@click.option("-d", "--disable-verbose", help="Disable echoing messages.", is_flag=True)
+def deactivate_app(disable_verbose):
     """Deactivate FocusEnabler"""
+    if disable_verbose:
+        disable_stdout()
     initialise_app()
     enforce_privileged_access()
     enforce_accessible_host()
@@ -331,22 +365,26 @@ def deactivate_app():
         print_message("Reading host file", "Done")
         content = re.sub(rf"{config_dict['section_start']}(.|[\n\r\t])*{config_dict['section_end']}", "", content)
         if len(content) == original_content_len:
-            click.echo(click.style("FocusEnabler is not activated! Activate first", "red"))
+            print_error("FocusEnabler is not activated! Activate first")
             exit(1)
         else:
             print_message("Deactivating FocusEnabler", "Done")
     except OSError:
-        print_message("Reading host file", "Failed", content_colour="red")
+        print_message("Reading host file", "Failed", content_colour="red", fp=sys.stderr)
         exit(1)
     try:
         with open(path_host, "w") as fp:
             fp.write(content)
         print_message("Writing to host file", "Done")
-        click.echo(click.style("FocusEnabler is disabled!", "cyan"))
+        click.echo("FocusEnabler is disabled!", color="cyan")
     except OSError:
-        print_message("Writing to host file", "Failed", content_colour="red")
+        print_message("Writing to host file", "Failed", content_colour="red", fp=sys.stderr)
 
 
 def run_core():
     """Acts as the entry point to run this app."""
     app_root()
+
+
+if __name__ == '__main__':
+    run_core()
