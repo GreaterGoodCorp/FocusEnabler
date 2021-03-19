@@ -45,6 +45,9 @@ Available options:
 
 * `-c` (`--clear`): Remove all blacklisted domains before adding new one (same as `focus remove .`)
 
+* `-d` (`--disable-verbose`): Disable echoing info-messages to console. This option does not block warning or error
+   messages
+
 For example, to blacklist `youtube.com` and `facebook.com`, run the following:
 
 ```bash
@@ -77,6 +80,13 @@ The output is as follows:
 Likewise, to remove (un-blacklist) any domain names, use `focus remove <DOMAINS>`, where `<DOMAINS>` is a list of domain
 names to un-blacklist, separated by blank space.
 
+Available options:
+
+* `-c` (`--confirm`): Ask before removing each domain.
+
+* `-d` (`--disable-verbose`): Disable echoing info-messages to console. This option does not block warning or error
+   messages.
+
 For example, to un-blacklist `youtube.com` and `facebook.com`, run the following:
 
 ```bash
@@ -104,6 +114,11 @@ The output should look like this:
 
 To check for all blacklisted domains, run `focus list`.
 
+Available options:
+
+* `-d` (`--disable-verbose`): Disable echoing info-messages to console. This option does not block warning or error
+   messages.
+
 The output should look like this:
 
 ```
@@ -117,11 +132,19 @@ All blacklisted domains:
 > Notes:
 > 
 > * Do not run this command as `root` (or Administrator, for Windows). An error will occur when attempting to do so.
+> 
+> * If `--disable-verbose` is set, this function will still list all blacklisted domains, minus the extra system
+>   information.
 
 ### Activate FocusEnabler
 
 To activate FocusEnabler, i.e. to start blocking blacklisted domains, run `sudo focus activate` (on Windows, open
 `Command Prompt` as administrator and run `focus activate` instead).
+
+Available options:
+
+* `-d` (`--disable-verbose`): Disable echoing info-messages to console. This option does not block warning or error
+   messages.
 
 The output should look like this:
 
@@ -138,10 +161,36 @@ FocusEnabler is enabled!
 > 
 > * `sudo` (or Administrator on Windows) is required as this program needs to write to the system' hosts file.
 
+### Activate FocusEnabler
+
+Likewise, to deactivate FocusEnabler, run `sudo focus deactivate` (on Windows, open `Command Prompt` as administrator
+and run `focus deactivate` instead).
+
+Available options:
+
+* `-d` (`--disable-verbose`): Disable echoing info-messages to console. This option does not block warning or error
+   messages.
+
+The output should look like this:
+
+```
+- Checking operating system → MacOS
+- Checking if a config file is already exists → Found at /Users/m1k3/.focusenabler
+- Checking if host file is accessible → Yes
+- Reading host file → Done
+- Deactivating FocusEnabler → Done
+- Writing to host file → Done
+FocusEnabler is disabled!
+```
+
+> Notes:
+> 
+> * Like `focus activate`, `sudo` (or Administrator on Windows) is required as this program needs to write to the 
+> system' hosts file.
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
 
 ## License
 
