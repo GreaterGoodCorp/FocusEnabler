@@ -5,7 +5,7 @@ with open("README.md") as fp:
 
 setup(
     name="FocusEnabler",
-    version="1.2.0",
+    version="1.3.0",
     author="Nguyen Thai Binh",
     author_email="binhnt.mdev@gmail.com",
     description="A program to enable focus by blocking websites and more",

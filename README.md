@@ -188,6 +188,24 @@ FocusEnabler is disabled!
 > * Like `focus activate`, `sudo` (or Administrator on Windows) is required as this program needs to write to the 
 > system' hosts file.
 
+## Changelog
+
+### Version 1.0.0 - 1.2.0
+
+Initial release. No changelog available
+
+### Version 1.3.0
+
+1. New features:
+
+   * Added an option to all commands to disable echoing info-messages to console.
+   
+2. Internal changes
+
+   * Optimised code flow
+   
+   * Remove unnecessary code guard
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
