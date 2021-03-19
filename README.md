@@ -41,6 +41,10 @@ Once installed, the program can be invoked by running `focus`. Sample usage is a
 In order to blacklist certain domain names, use `focus add <DOMAINS>`, where `<DOMAINS>` is a list of domain names to
 blacklist, separated by blank space.
 
+Available options:
+
+* `-c` (`--clear`): Remove all blacklisted domains before adding new one (same as `focus remove .`)
+
 For example, to blacklist `youtube.com` and `facebook.com`, run the following:
 
 ```bash
@@ -51,7 +55,7 @@ The output is as follows:
 
 ```
 - Checking operating system → MacOS
-- Checking if a config file is already exists → Found at /Users/m1k3/.focusenabler
+- Checking if a config file is already exists → Found at ~/.focusenabler
 - Checking if host file is accessible → No
 - Blacklisting facebook.com → Done
 - Blacklisting youtube.com → Already blacklisted
@@ -61,6 +65,8 @@ The output is as follows:
 > Notes:
 > 
 > * The domain will be ignored if its syntax is invalid.
+> 
+> * Do not run this command as `root` (or Administrator, for Windows). An error will occur when attempting to do so.
 > 
 > * `FocusEnabler` will remember any blacklisted domain names, even after rebooting.
 >
@@ -81,7 +87,7 @@ The output should look like this:
 
 ```
 - Checking operating system → MacOS
-- Checking if a config file is already exists → Found at /Users/m1k3/.focusenabler
+- Checking if a config file is already exists → Found at ~/.focusenabler
 - Checking if host file is accessible → No
 - Un-blacklisting youtube.com → Done
 - Un-blacklisting facebook.com → Done
@@ -91,6 +97,46 @@ The output should look like this:
 > Notes:
 > 
 > * The domain will be ignored if it is not blacklisted already.
+> 
+> * Do not run this command as `root` (or Administrator, for Windows). An error will occur when attempting to do so.
+
+### List blacklisted websites
+
+To check for all blacklisted domains, run `focus list`.
+
+The output should look like this:
+
+```
+- Checking operating system → MacOS
+- Checking if a config file is already exists → Found at ~/.focusenabler
+- Checking if host file is accessible → No
+All blacklisted domains:
+(1) instagram.com
+```
+
+> Notes:
+> 
+> * Do not run this command as `root` (or Administrator, for Windows). An error will occur when attempting to do so.
+
+### Activate FocusEnabler
+
+To activate FocusEnabler, i.e. to start blocking blacklisted domains, run `sudo focus activate` (on Windows, open
+`Command Prompt` as administrator and run `focus activate` instead).
+
+The output should look like this:
+
+```
+- Checking operating system → MacOS
+- Checking if a config file is already exists → Found at /Users/m1k3/.focusenabler
+- Checking if host file is accessible → Yes
+- Adding entry instagram.com → Done
+- Writing to host file → Done
+FocusEnabler is enabled!
+```
+
+> Notes:
+> 
+> * `sudo` (or Administrator on Windows) is required as this program needs to write to the system' hosts file.
 
 ## Contributing
 
